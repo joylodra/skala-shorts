@@ -1,0 +1,7 @@
+{
+ "_note": "story events in frames (30 fps) on the FINAL voice timeline (voice/words.txt lists every word's frame); read by story.ts, staging.ts and sound.py",
+ "_total": 150,
+ "flash": -100,
+ "hello": 20,
+ "wave": 45
+}
