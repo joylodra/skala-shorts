@@ -10,7 +10,7 @@ from just a **script + voiceover**. English and Bahasa Indonesia.
    Google Chrome.
 2. Clone this repo into your Claude skills folder:
    ```bash
-   git clone <this repo url> ~/.claude/skills/skala-short
+   git clone https://github.com/joylodra/skala-shorts.git ~/.claude/skills/skala-short
    ```
 3. Set up the render tools (≈ 5 min, ~1 GB):
    ```bash
