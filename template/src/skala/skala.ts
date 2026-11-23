@@ -499,7 +499,7 @@ const OLD_ANCHOR: Partial<Record<OldArms, P2>> = { hold: [510, 720], phone: [745
 
 // ---------------- v2 props ----------------
 export type NewProp = "laptop" | "coffee" | "megaphone" | "sign" | "trophy" | "clipboard" | "mic" | "camera" | "selfie" | "magnifier"
-  | "book" | "calculator" | "notes" | "pointer" | "popcorn" | "chart" | "money" | "lightbulb" | "marker";
+  | "book" | "calculator" | "notes" | "pointer" | "popcorn" | "chart" | "money" | "lightbulb" | "marker" | "can";
 type PropCtx = { p: Pen; a: P2; pose?: Pose; o: SkalaOpts; dx: number; pal: { hood: [string, string]; body: [string, string] } };
 type PropFn = (c: PropCtx) => void;
 const DARK: [string, string] = ["#4a4d5c", "#262833"], WOOD: [string, string] = ["#d99a5b", "#a8652f"], GOLD: [string, string] = ["#ffd84a", "#e09a12"];
@@ -542,6 +542,17 @@ const PROPS2: Record<NewProp, PropFn> = {
     p.clip(C, () => fill(p, [[x - 60, y - 14], [x + 60, y - 14], [x + 60, y + 26], [x - 60, y + 26]], "#b9773f"));
     p.inkRing(C, 9, rad(60), 0.4);
     obj(p, xf(rrL(104, 24, 9), x, y - 64), "#f3e9e0", "#d2c3b6", 8);
+  },
+  can: ({ p, a }) => { // generic energy-drink can (no logo): silver body, blue band, lightning stripe
+    const x = a[0] - 4, y = a[1] - 70;
+    const C = cw(chaikin([[x - 34, y - 78], [x + 34, y - 78], [x + 34, y + 78], [x - 34, y + 78]], 1));
+    p.gradFill(C, "#e9edf3", "#a7afbd", LIGHT, 0.35);
+    p.clip(C, () => {
+      fill(p, [[x - 50, y - 30], [x + 50, y - 30], [x + 50, y + 34], [x - 50, y + 34]], "#2f56c8");
+      fill(p, [[x - 6, y - 28], [x + 14, y - 28], [x + 2, y - 2], [x + 16, y - 2], [x - 12, y + 32], [x - 2, y + 6], [x - 16, y + 6]], "#ffd23f");
+    });
+    p.inkRing(C, 9, rad(60), 0.4);
+    obj(p, xf(rrL(60, 14, 6), x, y - 82), "#cfd5df", "#9aa2b2", 7);
   },
   megaphone: ({ p, a }) => {
     const T = (pts: P2[]) => xf(pts, a[0] + 10, a[1] - 96, -22, 1.2);
@@ -677,7 +688,7 @@ const PROPS2: Record<NewProp, PropFn> = {
 const PROP_OVER = new Set<NewProp>(["laptop"]);
 /** recommended arm pose for each prop */
 export const PROP_ARMS: Record<NewProp, Arms> = {
-  laptop: "typing", coffee: "holdR", megaphone: "megaphone", sign: "holdUp", trophy: "holdUp", clipboard: "writing", mic: "mic",
+  laptop: "typing", coffee: "holdR", can: "holdR", megaphone: "megaphone", sign: "holdUp", trophy: "holdUp", clipboard: "writing", mic: "mic",
   camera: "holdFront", selfie: "selfie", magnifier: "magnify", book: "read", calculator: "holdFront", notes: "writing",
   pointer: "stickAsk", popcorn: "popcorn", chart: "holdFront", money: "holdR", lightbulb: "holdUp", marker: "writeUp",
 };

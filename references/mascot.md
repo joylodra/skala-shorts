@@ -74,11 +74,11 @@ up), crumple, thumbsUp, facepalm, chin, clap, salute, crossed, hips, coverMouth,
 mic, magnify, popcorn, handsChest, fists, gesture, scratch, flinch, megaphone, stickUp, stickAsk, stickThumb,
 stickNo, stickRight, stickUpRight, stickYay, stickDown.
 
-## Props (`prop`, 23) with their matching arms (`PROP_ARMS`)
+## Props (`prop`, 24) with their matching arms (`PROP_ARMS`)
 bucket (hold), phone (phone), scroll (hide), ball (crumple), laptop (typing), coffee (holdR), megaphone (megaphone),
 sign (holdUp; `text: "..."` prints on it), trophy (holdUp), clipboard (writing), mic (mic), camera (holdFront),
 selfie (selfie), magnifier (magnify), book (read), calculator (holdFront), notes (writing), pointer (stickAsk or any
-stick* pose), popcorn (popcorn), chart (holdFront), money (holdR), lightbulb (holdUp), marker (writeUp).
+stick* pose), popcorn (popcorn), chart (holdFront), money (holdR), lightbulb (holdUp), marker (writeUp), can (holdR; generic energy-drink can, no logo).
 
 ## Effect cards (unlit, drawn on their own canvas)
 New ones use a 300 x 300 canvas: fxExclaim, fxQuestion, fxSparkles, fxAngerVein, fxSweatDrops, fxZzz, fxLightbulb,

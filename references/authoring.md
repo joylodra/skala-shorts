@@ -73,7 +73,8 @@ scale. Examples: heart over the display, sweat drop by a face, laugh reactions r
 ## 6. Props + wall display (video/props.ts)
 - `drawScreen(g, f)`: paint the 2048 x 1152 display every frame (Canvas2D). Keep text big (≥ 60 px) and few words;
   icons drawn with `Pen` read best. The display shows in many shots, so make its content follow the story state.
-  Vertical shots often see only the middle ~60 % of it: keep the key content between x 500 and 1550.
+  Vertical shots see only the middle of it: in screen close-ups (camera ~4 m from the wall) only x ≈ 650-1400 of
+  the 2048 canvas is visible. Put every number, counter and key icon inside x 700-1350; wides show more.
 - `buildProps(kit)`: once; returns `update(f, shotId)`. Kit: `kit.unlit(texture, w, h, pos, yaw, pitch, brightness)`,
   `kit.box(min, max, colour)` (lit, ink-outlined), `new kit.DynTex(w, h)` with `.set(key, draw)` (redraws only when the
   key changes). Desk top y = 0.744 (DESK_H + 0.004). KFC example: a desk calendar that flips, a newspaper that drops
