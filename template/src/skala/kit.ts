@@ -21,14 +21,16 @@ export class DynTex {
 
 export type PropKit = {
   root: THREE.Group;
+  /** the office set: set .visible = false in update() for scenes that happen elsewhere (space, outdoors, ...) */
+  office: THREE.Group;
   /** unlit picture plane (screens, paper, signs): map, width, height, position, yaw, pitch, brightness */
   unlit: (map: THREE.Texture, w: number, h: number, pos: V3, ry?: number, rx?: number, k?: number) => THREE.Mesh;
   /** lit, ink-outlined box with one of the room colours (or any css colour) */
   box: (min: V3, max: V3, color: string) => THREE.Mesh;
   DynTex: typeof DynTex;
 };
-export const makeKit = (root: THREE.Group, unlit: PropKit["unlit"]): PropKit => ({
-  root, unlit, DynTex,
+export const makeKit = (root: THREE.Group, unlit: PropKit["unlit"], office: THREE.Group): PropKit => ({
+  root, office, unlit, DynTex,
   box: (min, max, color) => {
     const m = new THREE.Mesh(boxGeo(V(...min), V(...max)), lam("pk" + color, () => ({ color })));
     m.castShadow = true; m.receiveShadow = true; root.add(m); return m;

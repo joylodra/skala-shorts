@@ -59,6 +59,8 @@ const RX = ROOM.halfWidth, BZ = ROOM.backZ, WALL_H = ROOM.wallH;
 
 export class World {
   root = new THREE.Group();
+  /** the whole office set (room, furniture, skyline, its unlit screens); props.ts can hide it for scenes elsewhere */
+  office = new THREE.Group();
   private pool = new Pool();
   private actors: Actor[] = [];
   private fxs: Fx[] = [];
@@ -171,19 +173,21 @@ export class World {
       if (Math.abs(x) < 8 && z > -40) continue;
       b.add(boxGeo(V(x - w / 2, -40, z - d / 2), V(x + w / 2, -40 + h, z + d / 2)), M.bldg[k % 4]);
     }
-    b.build(R);
+    R.add(this.office);
+    b.build(this.office);
 
     // ---- unlit surfaces: display, monitors, whiteboard, clock, calendar, newspaper ----
-    const unlit = (map: THREE.Texture, w: number, h: number, pos: V3, ry = 0, rx = 0, k = 1) => {
+    const unlitIn = (parent: THREE.Object3D) => (map: THREE.Texture, w: number, h: number, pos: V3, ry = 0, rx = 0, k = 1) => {
       const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map, color: new THREE.Color(k, k, k), toneMapped: true }));
-      m.position.set(...pos); m.rotation.set(rx, ry, 0, "YXZ"); R.add(m); return m;
+      m.position.set(...pos); m.rotation.set(rx, ry, 0, "YXZ"); parent.add(m); return m;
     };
+    const unlit = unlitIn(this.office);
     unlit(this.screen.tex, SCREEN_W, SCREEN_H, [SCREEN[0], SCREEN[1], BZ + 0.065], 0, 0, 1.05);
     const mon = monitorTex();
     DESKS.forEach(([x, z]) => { if (!(x === MYDESK[0] && z === MYDESK[2])) unlit(mon, 0.54, 0.32, [x, DESK_H + 0.3, z - 0.265]); });
     unlit(boardTex(), 2.5, 1.2, [RX - 0.06, 1.65, -2.5], -Math.PI / 2, 0, 0.95);
     unlit(clockTex(), 0.5, 0.5, [-RX + 0.02, 2.55, -2.5], Math.PI / 2, 0, 0.95);
-    this.props = buildProps(makeKit(R, unlit));
+    this.props = buildProps(makeKit(R, unlitIn(R), this.office));
   }
 
   /** camera-relative sun frozen per shot: az degrees from the shot's mean view direction toward screen right */

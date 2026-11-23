@@ -63,7 +63,7 @@ export const staging = (id: number, f: number, api: StageAPI) => {
 ```
 `Who` fields: `i` (stable id, drives blinks), `v` ("skala" | "blue" | "green" | "purple" | "teal"), `x, z`, `expr`,
 `arms`, `prop`, `look` (-1..1), `tilt` (deg), `hop` (m, lifts the card), `scale` (0.8 for a background extra),
-`talk` (mouth flaps). Brand poses: `...brandPose("skala-teach-explain")`. Motions (walk/jump/bounce/nod/shake) return
+`talk` (mouth flaps), `floor` (ground height in m for scenes off the office floor), `noShadow`. Brand poses: `...brandPose("skala-teach-explain")`. Motions (walk/jump/bounce/nod/shake) return
 fields to spread in: see mascot.md. Each `add` also drops a contact shadow.
 Effect cards: `out.fx.push({ key, cw, ch, draw, x, y, z, w, h, rot?, flat?, soft? })`: `key` must change when the
 drawing changes (it caches canvases by key); `cw/ch` canvas size; `w/h` metres; `pop(f, a, b)` gives a 0..1 pop-in/out
@@ -79,6 +79,14 @@ scale. Examples: heart over the display, sweat drop by a face, laugh reactions r
   `kit.box(min, max, colour)` (lit, ink-outlined), `new kit.DynTex(w, h)` with `.set(key, draw)` (redraws only when the
   key changes). Desk top y = 0.744 (DESK_H + 0.004). KFC example: a desk calendar that flips, a newspaper that drops
   onto the desk and whose bucket letters shuffle.
+
+### Scenes outside the office (space, a stage, outdoors)
+Build the set in `buildProps` far from the office (e.g. 300 m up), and in its update toggle
+`space.visible = id <= 2; kit.office.visible = !(id <= 2)` for the shots that happen there. Stand characters on it with
+`floor: 300`; materials for sky/planets use `fog: false`, background domes go on the `NOINK` layer. Worked example:
+the Red Bull hook (examples/redbull-id): a star dome, a cartoon Earth sphere (R 2000 m, 150 m below, ocean + clouds
+texture, faint atmosphere shell), a capsule and a step; Skala jumps off with `hop` driven by a ballistic curve and the
+camera tilts after him.
 
 ## 7. Lens (DOF)
 `DOF: Dof[]` entries `{ f, dur?, cInf, focus? }`: cInf px at 1080 wide (CU 12-14, MS 8-11, context 6, wide/screen 0);

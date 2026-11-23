@@ -116,9 +116,11 @@ const lidAt = (f0: number, i: number) => {
 /** one Skala on stage. Spread a brand pose (`...brandPose("skala-teach-explain")`) or a motion (`...walkPose(t)`) into it.
  *  hop = metres off the floor; sx/sy = squash-stretch (from motions); legs = foot lift -1..1; facing -1 mirrors. */
 export type Who = { i: number; v: Variant; x: number; z: number; expr: Expr; arms?: Arms; prop?: Prop; look?: number; hop?: number; tilt?: number;
-  talk?: boolean | number; scale?: number; legs?: number; facing?: 1 | -1; text?: string; sx?: number; sy?: number };
+  talk?: boolean | number; scale?: number; legs?: number; facing?: 1 | -1; text?: string; sx?: number; sy?: number;
+  /** height of the ground under this character (m, default 0); hop is added on top. noShadow: no contact shadow */
+  floor?: number; noShadow?: boolean };
 export const skala = (cam: CamInfo, f: number, w: Who, out: Stage) => {
-  const sc = w.scale ?? 1, y = w.hop ?? 0;
+  const sc = w.scale ?? 1, fl = w.floor ?? 0, hop = w.hop ?? 0, y = fl + hop;
   const d = cam.pos.distanceTo(tmp.set(w.x, y + 1.0 * sc, w.z)) / sc;
   const [cw, ch, k] = tier(d);
   // talking mouth flaps at ~5 Hz while the voice runs (presenter beats only)
@@ -130,8 +132,8 @@ export const skala = (cam: CamInfo, f: number, w: Who, out: Stage) => {
   out.places.push({ key, draw: (p) => drawSkala(p, o), x: w.x, y, z: w.z, scale: sc, sx: w.sx, sy: w.sy, size: [cw, ch, k] });
   // tight contact shadow under the feet (bright floor, multiply)
   const cc = "#a8a3b8";
-  out.fx.push({ key: `blob|contact|${cc}`, cw: 128, ch: 128, draw: (p) => fxContact(p, cc), x: w.x, y: 0.012, z: w.z + 0.02,
-    w: 1.15 * sc * (1 - 0.3 * clamp01(y / 0.3)), h: 0.55 * sc, flat: true });
+  if (!w.noShadow && hop > -0.05) out.fx.push({ key: `blob|contact|${cc}`, cw: 128, ch: 128, draw: (p) => fxContact(p, cc), x: w.x, y: fl + 0.012, z: w.z + 0.02,
+    w: 1.15 * sc * (1 - 0.3 * clamp01(hop / 0.3)), h: 0.55 * sc, flat: true });
 };
 
 export const ringFx = (f: number, x: number, y: number, z: number, i: number, out: Stage) => {
