@@ -3,6 +3,7 @@ import { brandPose, jumpPose, bouncePose, shakePose, fxExclaim, fxStarBurst, fxC
 import { StageAPI, pop } from "../skala/cast";
 import { SPOTS } from "../skala/room";
 import { EV, JUMP0, skalaFall } from "./story";
+import { canImg, CAN_ASPECT } from "./props";
 
 const L = 2;
 // the watch-party crew for the wide shots (in front of the display, all visible from the wide camera)
@@ -15,7 +16,13 @@ export const staging = (id: number, f: number, api: StageAPI) => {
   switch (id) {
     case 1: { // hook, in space: Skala on the capsule step with an energy can, mindblown on "angkasa"
       const wow = f >= EV.angkasa - L;
-      add({ i: 1, v: "skala", x: 0, z: 0, floor: 300, ...(wow ? { expr: "mindblown", arms: "holdR", prop: "can" } : { expr: "talk", arms: "holdR", prop: "can", talk: true }) });
+      add({ i: 1, v: "skala", x: 0, z: 0, floor: 300, ...(wow ? { expr: "mindblown", arms: "holdR" } : { expr: "talk", arms: "holdR", talk: true }) });
+      // the real can (brand product shot) in Skala's right hand: design point (702, 560) on the card, 190 units tall
+      const SKU = 0.0023, cam = api.cam, r = cam.right, tx = cam.pos.x, tz = cam.pos.z, dl = Math.hypot(tx, tz) || 1;
+      const ox = (702 - 500) * SKU, h = 190 * SKU;
+      const img = canImg;
+      if (img) fx({ key: "brandcan", cw: 316, ch: 868, draw: (p) => p.g.drawImage(img, 0, 0, 316, 868),
+        x: r.x * ox + (tx / dl) * 0.06, y: 300 + (940 - 560) * SKU, z: r.z * ox + (tz / dl) * 0.06, w: h * CAN_ASPECT, h });
       const k = pop(f, EV.angkasa - L, 999);
       if (k > 0) fx({ key: "ex", cw: 300, ch: 300, draw: fxExclaim, x: 0.8, y: 301.95, z: 0.05, w: 0.42 * k, h: 0.42 * k, rot: 0.12 });
       break;

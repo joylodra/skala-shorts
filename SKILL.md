@@ -62,7 +62,11 @@ Rules of thumb (details and numbers in `references/authoring.md`):
 5. `sound.py`: score sections + SFX cues on events (see `references/sound.md`; copy patterns from the KFC example).
 Type-check with `npx tsc --noEmit` in the project.
 
-## 5. Look check with stills (iterate until clean)
+## 5. Look check (iterate until clean) — never full-render while iterating
+**Live preview for the person:** start Remotion Studio in the background (`bash <skill>/bin/studio.sh "<project>"`,
+port 3000) and open `http://localhost:3000` in the browser pane. They scrub the timeline and point at frames; edits to
+`src/video/*` reload live. Offer this whenever they want to review or give notes.
+**Your own check:** stills, as below.
 ```bash
 cd "<project>" && node scripts/stills.mjs out/s1_ <frame,frame,...> 0.5
 ```
@@ -78,7 +82,7 @@ screen content. Expect 2-3 rounds.
 Writes `audio_out/mix.wav` at -14 LUFS (voice -16 LUFS, music ducked under the voice, standard levels). Re-run after
 any timing change.
 
-## 7. Render + QA
+## 7. Render + QA (once), then partial re-renders for notes
 ```bash
 bash <skill>/bin/render.sh "<project>" "<project>/<slug>.mp4"
 ```
@@ -86,9 +90,29 @@ bash <skill>/bin/render.sh "<project>" "<project>/<slug>.mp4"
 writes `out/qa_sheet.jpg`. Look at the sheet; if anything is wrong, fix, re-render. If the render dies, read
 `out/render.log` (see Gotchas).
 
+**Notes after the render: re-render only what changed** (~45 s per shot instead of ~10 min):
+```bash
+bash <skill>/bin/rerender.sh "<project>" "<project>/<slug>-v2.mp4" <from>-<to> [<from>-<to> ...]
+```
+Ranges are composition frames, inclusive; use whole shots (CUTS boundaries) so a shot never mixes old and new frames.
+It splices into `out/video_silent.mp4`, checks the frame count and re-muxes `audio_out/mix.wav`. Something visible in
+many shots (a badge on the wall display, a caption style) still needs `render.sh`. Timing changes need make_audio.py first.
+
 ## 8. Deliver
 Send the MP4, list what is in each beat in a few lines, note anything you could not fix, and offer 3-5 one-line
 Instagram captions (hook-first; one lesson line; one question line) plus 3-7 hashtags if asked.
+
+## Working efficiently
+- **One session per video.** The skill carries all the know-how; a long conversation makes every small edit slow and
+  token-heavy. Start a fresh session for each new video (and for big revisions of an old one).
+- Review in Studio, fix, then render once; use rerender.sh for late notes.
+- Look at small still sheets (scale ≤ 0.5, a few frames) rather than many full-size images.
+
+## Brand assets (logos, product shots)
+Only when the person supplies the file and asks for it. Use it unaltered (crop only), put it in `public/brand/`, load
+it once with `delayRender` + `staticFile` (see examples/redbull-id/video/props.ts `canImg`) and draw it as an effect
+card or on the wall display. Place it editorially (on the thing that carried it), never beside Skala+ branding as if
+it were a partnership; mention the trademark caveat once.
 
 ## Gotchas (all hit for real)
 - `--scale` must be exactly `1.3333333333333333` (1.3333 gives an odd width and H.264 refuses).

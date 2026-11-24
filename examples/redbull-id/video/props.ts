@@ -7,6 +7,18 @@ import { lam } from "../skala/build";
 import { NOINK } from "../skala/ink";
 import { clamp01, easeOut, smooth } from "../skala/camera";
 import type { PropKit } from "../skala/kit";
+import { continueRender, delayRender, staticFile } from "remotion";
+
+/** the brand's own product shot (supplied by the Skala+ team, used unaltered): public/brand/redbull-can.png, 316 x 868 */
+export const CAN_ASPECT = 316 / 868;
+export const canImg: HTMLImageElement | null = (() => {
+  if (typeof document === "undefined") return null;
+  const img = new Image(), h = delayRender("brand can");
+  img.onload = () => continueRender(h);
+  img.onerror = () => continueRender(h);
+  img.src = staticFile("brand/redbull-can.png");
+  return img;
+})();
 import { EV } from "./story";
 
 const W = 2048, H = 1152, CX = 1024;
@@ -82,16 +94,85 @@ const miniSkala = (g: CanvasRenderingContext2D, x: number, y: number, s: number,
   drawSkala(new Pen(g), { v: "skala", expr: calm ? "happy" : "excited", arms: calm ? "up" : "cheer", blink: 0 });
   g.restore();
 };
-const hud = (g: CanvasRenderingContext2D, label: string, value: string, x: number, y: number, align: "left" | "right", hot = 0) => {
+// ---------------- wordless HUD: every label is a drawn icon (numbers stay) ----------------
+type IconFn = (g: CanvasRenderingContext2D, x: number, y: number) => void;
+const ink = (g: CanvasRenderingContext2D, w = 8) => { g.lineWidth = w; g.strokeStyle = INK; g.lineJoin = "round"; g.lineCap = "round"; g.stroke(); };
+const hud = (g: CanvasRenderingContext2D, icon: IconFn, value: string, x: number, y: number, align: "left" | "right", hot = 0) => {
   const w = 470, x0 = align === "left" ? x : x - w;
   g.fillStyle = "rgba(10,14,30,0.72)"; rr(g, x0, y, w, 150, 26); g.fill();
-  text(g, label, x0 + 30, y + 40, 38, "#9fb6e6", 700, "left");
-  text(g, value, x0 + 30, y + 100, 78, hot > 0 ? mixHex("#ffffff", "#ffd23f", hot) : "#ffffff", 900, "left");
+  icon(g, x0 + 75, y + 75);
+  text(g, value, x0 + 145, y + 78, 78, hot > 0 ? mixHex("#ffffff", "#ffd23f", hot) : "#ffffff", 900, "left");
 };
+/** altitude: a ruler with a little balloon climbing it (u 0..1) */
+const iconAlt = (u: number): IconFn => (g, x, y) => {
+  g.fillStyle = "#e8eef9"; rr(g, x - 14, y - 58, 28, 116, 12); g.fill(); ink(g, 6);
+  g.strokeStyle = "#7a86a3"; g.lineWidth = 4; for (let k = 0; k < 5; k++) { g.beginPath(); g.moveTo(x - 8, y - 40 + k * 20); g.lineTo(x + 8, y - 40 + k * 20); g.stroke(); }
+  const by = y + 44 - 88 * u;
+  g.fillStyle = "#ffffff"; g.beginPath(); g.ellipse(x + 34, by - 12, 16, 20, 0, 0, Math.PI * 2); g.fill(); ink(g, 5);
+  g.fillStyle = "#f4f1ea"; g.fillRect(x + 28, by + 12, 12, 10); g.strokeStyle = INK; g.lineWidth = 4; g.strokeRect(x + 28, by + 12, 12, 10);
+};
+/** stopwatch with a sweeping hand */
+const iconWatch = (frac: number): IconFn => (g, x, y) => {
+  g.fillStyle = "#c9cfdb"; rr(g, x - 12, y - 64, 24, 16, 5); g.fill(); ink(g, 5);
+  g.fillStyle = "#ffffff"; g.beginPath(); g.arc(x, y + 6, 48, 0, Math.PI * 2); g.fill(); ink(g, 8);
+  const a = -Math.PI / 2 + frac * Math.PI * 2;
+  g.strokeStyle = "#e2453c"; g.lineWidth = 7; g.lineCap = "round"; g.beginPath(); g.moveTo(x, y + 6); g.lineTo(x + 36 * Math.cos(a), y + 6 + 36 * Math.sin(a)); g.stroke();
+  g.fillStyle = INK; g.beginPath(); g.arc(x, y + 6, 7, 0, Math.PI * 2); g.fill();
+};
+/** speedometer: needle swings from left to the red zone (frac 0..1) */
+const iconSpeed = (frac: number): IconFn => (g, x, y) => {
+  g.fillStyle = "#ffffff"; g.beginPath(); g.arc(x, y + 22, 56, Math.PI, 0); g.closePath(); g.fill(); ink(g, 8);
+  g.strokeStyle = "#e2453c"; g.lineWidth = 12; g.lineCap = "butt"; g.beginPath(); g.arc(x, y + 22, 44, -0.45, 0); g.stroke();
+  const a = Math.PI + frac * Math.PI * 0.96;
+  g.strokeStyle = INK; g.lineWidth = 7; g.lineCap = "round"; g.beginPath(); g.moveTo(x, y + 22); g.lineTo(x + 46 * Math.cos(a), y + 22 + 46 * Math.sin(a)); g.stroke();
+  g.fillStyle = INK; g.beginPath(); g.arc(x, y + 22, 8, 0, Math.PI * 2); g.fill();
+};
+/** on-air badge: the familiar red "LIVE" pill with a pulsing dot */
 const live = (g: CanvasRenderingContext2D, f: number) => {
-  g.fillStyle = "#e2453c"; rr(g, 60, 50, 180, 70, 16); g.fill();
-  g.fillStyle = Math.floor(f / 15) % 2 ? "#ffffff" : "#ffb3ad"; g.beginPath(); g.arc(100, 85, 13, 0, Math.PI * 2); g.fill();
-  text(g, "LIVE", 175, 87, 44, "#ffffff", 900);
+  g.fillStyle = "#e2453c"; rr(g, 60, 50, 190, 74, 18); g.fill();
+  g.fillStyle = Math.floor(f / 15) % 2 ? "#ffffff" : "#ffb3ad"; g.beginPath(); g.arc(102, 87, 14, 0, Math.PI * 2); g.fill();
+  text(g, "LIVE", 182, 89, 46, "#ffffff", 900);
+};
+/** an eye (the "watching" icon) */
+const iconEye: IconFn = (g, x, y) => {
+  g.fillStyle = "#ffffff"; g.beginPath(); g.moveTo(x - 60, y); g.quadraticCurveTo(x, y - 52, x + 60, y); g.quadraticCurveTo(x, y + 52, x - 60, y); g.closePath(); g.fill(); ink(g, 8);
+  g.fillStyle = "#3b6fd6"; g.beginPath(); g.arc(x, y, 22, 0, Math.PI * 2); g.fill(); g.fillStyle = INK; g.beginPath(); g.arc(x, y, 10, 0, Math.PI * 2); g.fill();
+};
+/** the audience: rows of tiny mini-Skala hoods filling up with the count (0..1) */
+const crowd = (g: CanvasRenderingContext2D, x0: number, y0: number, w: number, frac: number, f: number) => {
+  const cols = 12, rows = 3, n = Math.round(cols * rows * frac), cw = w / cols;
+  const pal = ["#ff9424", "#5aa2ff", "#4fd08a", "#b48cff", "#3fd0cf"];
+  for (let k = 0; k < n; k++) {
+    const c = k % cols, r = Math.floor(k / cols), x = x0 + cw * (c + 0.5) + (r % 2 ? cw / 2 : 0) * 0.5, y = y0 + r * 52 + 4 * Math.sin(f * 0.3 + k);
+    g.fillStyle = pal[(k * 7) % 5];
+    g.beginPath(); g.rect(x - 9, y - 20, 18, 40); g.rect(x - 20, y - 8, 40, 16); g.fill();
+    g.fillStyle = "#fff7ef"; g.beginPath(); g.arc(x, y + 6, 9, 0, Math.PI * 2); g.fill();
+  }
+};
+/** gold trophy (the record) */
+const trophy = (g: CanvasRenderingContext2D, x: number, y: number, s: number) => {
+  const p = new Pen(g); g.save(); g.translate(x, y); g.scale(s, s);
+  for (const k of [-1, 1]) { g.beginPath(); g.ellipse(k * 62, -40, 26, 34, 0, 0, Math.PI * 2); g.lineWidth = 14; g.strokeStyle = INK; g.stroke(); g.lineWidth = 7; g.strokeStyle = "#ffd23f"; g.stroke(); }
+  const cup: [number, number][] = []; for (let k = 0; k <= 16; k++) { const a = (k / 16) * Math.PI; cup.push([-62 * Math.cos(a) * -1, -86 + 96 * Math.sin(a)]); }
+  cup.push([-62, -86]);
+  p.gradFill(cup, "#ffe066", "#e09a12", -Math.PI * 0.75, 0.35); p.inkRing(cup, 9, 1, 0.4);
+  p.poly([[-14, 10], [14, 10], [20, 46], [-20, 46]], "#f0b42a", 7); p.poly([[-46, 46], [46, 46], [46, 70], [-46, 70]], "#8a5a2b", 7);
+  const st: [number, number][] = []; for (let k = 0; k < 10; k++) { const a = -Math.PI / 2 + (k * Math.PI) / 5, r = k % 2 ? 9 : 22; st.push([r * Math.cos(a), -46 + r * Math.sin(a)]); }
+  p.poly(st, "#fff7c2", 4);
+  g.restore();
+};
+/** a TV playing a generic ad (gift box + progress bar), no words */
+const tvAd = (g: CanvasRenderingContext2D, f: number) => {
+  const p = new Pen(g);
+  g.strokeStyle = INK; g.lineWidth = 9; g.lineCap = "round"; g.beginPath(); g.moveTo(-40, -230); g.lineTo(-90, -300); g.moveTo(40, -230); g.lineTo(90, -300); g.stroke();
+  g.fillStyle = "#3a4050"; rr(g, -330, -230, 660, 430, 40); g.fill(); ink(g, 10);
+  g.fillStyle = "#ffd9a0"; rr(g, -290, -195, 580, 330, 20); g.fill();
+  p.poly([[-70, -110], [70, -110], [70, 30], [-70, 30]], "#e2453c", 8); p.poly([[-84, -140], [84, -140], [84, -100], [-84, -100]], "#ff7a6e", 8);
+  g.fillStyle = "#ffd23f"; g.fillRect(-12, -140, 24, 170);
+  g.fillStyle = "rgba(0,0,0,0.25)"; rr(g, -270, 100, 540, 18, 9); g.fill();
+  g.fillStyle = "#e2453c"; rr(g, -270, 100, 540 * (0.2 + 0.3 * ((f % 60) / 60)), 18, 9); g.fill();
+  g.fillStyle = "#c9cfdb"; g.beginPath(); g.arc(250, -150, 26, 0, Math.PI * 2); g.fill(); ink(g, 5);
+  g.fillStyle = INK; g.beginPath(); g.moveTo(242, -164); g.lineTo(262, -150); g.lineTo(242, -136); g.closePath(); g.fill();
 };
 
 export const drawScreen = (g: CanvasRenderingContext2D, f: number) => {
@@ -100,7 +181,11 @@ export const drawScreen = (g: CanvasRenderingContext2D, f: number) => {
   if (f < EV.redbull) { // date card
     const k = easeOut((f - EV.tgl) / 10);
     live(g, f);
-    g.save(); g.globalAlpha = k; text(g, "14.10.2012", CX, 520, 210 * (0.85 + 0.15 * k)); text(g, "Roswell, New Mexico", CX, 700, 70, "#9fb6e6", 700); g.restore();
+    g.save(); g.globalAlpha = k;
+    if (canImg?.complete) g.drawImage(canImg, CX - 600, 270, 640 * CAN_ASPECT, 640); // the real can, left of the title
+    text(g, "Red Bull Stratos", CX + 150, 420, 84, "#ffffff", 800);
+    text(g, "14.10.2012", CX + 150, 570, 140 * (0.85 + 0.15 * k));
+    text(g, "Roswell, New Mexico", CX + 150, 710, 54, "#9fb6e6", 700); g.restore();
     return;
   }
   if (f < EV.dibawah) { // ascent
@@ -113,7 +198,7 @@ export const drawScreen = (g: CanvasRenderingContext2D, f: number) => {
     const groundY = 900 + a * 120; // the desert drops away
     if (groundY < H) { g.fillStyle = "#d9b27a"; g.fillRect(0, groundY, W, H - groundY); g.fillStyle = "#b98b55"; g.fillRect(0, groundY, W, 10); }
     { const bs = 0.78 - 0.28 * u; balloon(g, CX, 270 + 790 * bs + 6 * Math.sin(f * 0.08), bs); }
-    hud(g, "KETINGGIAN", `${a.toFixed(1).replace(".", ",")} km`, CX - 235, 70, "left", f >= EV.km39 - 2 ? clamp01(1 - (f - EV.km39) / 20) : 0);
+    hud(g, iconAlt(u), `${a.toFixed(1).replace(".", ",")} km`, CX - 235, 70, "left", f >= EV.km39 - 2 ? clamp01(1 - (f - EV.km39) / 20) : 0);
     live(g, f);
     return;
   }
@@ -122,11 +207,7 @@ export const drawScreen = (g: CanvasRenderingContext2D, f: number) => {
     earth(g, 560 - 0.25 * (f - EV.dibawah), 3000);
     g.strokeStyle = "#2a2f3d"; g.lineWidth = 120; rr(g, 60, 40, W - 120, H - 80, 120); g.stroke(); // door frame
     g.strokeStyle = INK; g.lineWidth = 10; rr(g, 120, 100, W - 240, H - 200, 90); g.stroke();
-    if (f >= EV.lalu - 4) {
-      g.fillStyle = "#3a4050"; rr(g, CX - 220, H - 210, 440, 60, 14); g.fill(); // the step
-      const drop = f >= EV.lompat2 - 2 ? clamp01((f - EV.lompat2 + 2) / 16) : 0;
-      miniSkala(g, CX, H - 330 + 520 * drop * drop, 0.32 * (1 - 0.6 * drop), 0.6 * drop, false);
-    }
+    // the view alone: curved Earth + black sky (no figure here; the mini Skala appears in the freefall)
     return;
   }
   // freefall / broadcast (from "jatuh" to the end)
@@ -160,15 +241,21 @@ export const drawScreen = (g: CanvasRenderingContext2D, f: number) => {
   const sec = 259 * smooth((f - EV.jatuh) / (EV.jam - EV.jatuh));
   const kmh = 1357 * smooth((f - EV.kecepatan) / (EV.speed + 40 - EV.kecepatan));
   if (f < EV.dan) {
-    hud(g, "JATUH BEBAS", `${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(Math.floor(sec % 60)).padStart(2, "0")}`, CX - 235, 60, "left");
-    hud(g, "KECEPATAN", `${fmt(kmh)} km/jam`, CX - 235, H - 260, "left", f >= EV.suara - 2 ? clamp01(1 - (f - EV.suara) / 30) : f >= EV.speed + 38 ? clamp01(1 - (f - EV.speed - 38) / 20) : 0);
+    hud(g, iconWatch((sec % 60) / 60), `${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(Math.floor(sec % 60)).padStart(2, "0")}`, CX - 235, 60, "left");
+    hud(g, iconSpeed(kmh / 1357), `${fmt(kmh)} km/jam`, CX - 235, H - 260, "left", f >= EV.suara - 2 ? clamp01(1 - (f - EV.suara) / 30) : f >= EV.speed + 38 ? clamp01(1 - (f - EV.speed - 38) / 20) : 0);
   } else {
     // viewers panel + floating hearts
     const v = 8_000_000 * smooth((f - EV.dan - 4) / (EV.juta + 14 - EV.dan));
-    g.fillStyle = "rgba(255,255,255,0.96)"; rr(g, CX - 290, 60, 580, 250, 34); g.fill(); g.lineWidth = 8; g.strokeStyle = INK; g.stroke();
-    text(g, "PENONTON LIVE", CX, 120, 40, "#5a6178", 800);
-    text(g, f >= EV.juta + 14 ? "8.000.000+" : fmt(v), CX, 220, 96, "#241726", 900);
-    if (f >= EV.rekor - 2 && f < EV.rb2) { const k = easeOut((f - EV.rekor + 2) / 8); g.save(); g.translate(CX + 200, 360); g.rotate(-0.08); g.scale(k, k); g.fillStyle = "#ffd23f"; rr(g, -170, -55, 340, 110, 24); g.fill(); g.lineWidth = 8; g.strokeStyle = INK; g.stroke(); text(g, "REKOR!", 0, 4, 70, "#241726", 900); g.restore(); }
+    g.fillStyle = "rgba(255,255,255,0.96)"; rr(g, CX - 300, 60, 600, 170, 34); g.fill(); g.lineWidth = 8; g.strokeStyle = INK; g.stroke();
+    iconEye(g, CX - 205, 145);
+    text(g, f >= EV.juta + 14 ? "8.000.000+" : fmt(v), CX - 120, 148, 88, "#241726", 900, "left");
+    g.fillStyle = "rgba(10,14,30,0.55)"; rr(g, CX - 300, 250, 600, 170, 30); g.fill();
+    crowd(g, CX - 290, 290, 580, Math.min(1, v / 8_000_000), f);
+    if (f >= EV.rekor - 2 && f < EV.rb2) {
+      const k = easeOut((f - EV.rekor + 2) / 8);
+      for (let q = 0; q < 8; q++) { const a = (q / 8) * Math.PI * 2 + f * 0.02; g.strokeStyle = "rgba(255,226,120,0.8)"; g.lineWidth = 8; g.beginPath(); g.moveTo(CX + 330 + 90 * k * Math.cos(a), 170 + 90 * k * Math.sin(a)); g.lineTo(CX + 330 + 130 * k * Math.cos(a), 170 + 130 * k * Math.sin(a)); g.stroke(); }
+      trophy(g, CX + 330, 190, 0.9 * k);
+    }
     for (let i = 0; i < 12; i++) {
       const u = ((f - EV.dan) * 0.012 + i * 0.083) % 1, x = CX + 280 + 60 * Math.sin(i * 2.1 + u * 6), y = H - 60 - u * 560;
       g.globalAlpha = 1 - u; g.fillStyle = ["#ff5d7a", "#ffd23f", "#5aa2ff"][i % 3]; g.beginPath();
@@ -179,8 +266,7 @@ export const drawScreen = (g: CanvasRenderingContext2D, f: number) => {
   if (f >= EV.rb2 && f < EV.momen) {
     const k = easeOut((f - EV.rb2) / 8);
     g.save(); g.translate(CX, 600); g.scale(k * 0.8, k * 0.8);
-    g.fillStyle = "#f4f1ea"; rr(g, -330, -200, 660, 400, 30); g.fill(); g.lineWidth = 10; g.strokeStyle = INK; g.stroke();
-    text(g, "IKLAN", 0, -40, 120, "#241726", 900); g.fillStyle = "#c9cfdb"; rr(g, 120, 100, 180, 60, 14); g.fill(); text(g, "Skip ▸", 210, 132, 36, "#5a6178", 800);
+    tvAd(g, f);
     const x = clamp01((f - EV.iklan + 2) / 10);
     if (x > 0) { g.strokeStyle = "#e2453c"; g.lineWidth = 34; g.lineCap = "round"; g.beginPath(); g.moveTo(-260, -160); g.lineTo(-260 + 520 * x, -160 + 320 * x); g.stroke(); if (x > 0.5) { const y = (x - 0.5) * 2; g.beginPath(); g.moveTo(260, -160); g.lineTo(260 - 520 * y, -160 + 320 * y); g.stroke(); } }
     g.restore();

@@ -8,5 +8,5 @@ A real team brief: final script + recorded voiceover (45.2 s, tightened to 34.6 
   the parachute — all inside the screen-close-up safe zone (x 700-1350);
 - a **mini Skala as the hero on screen** (no likeness of the real jumper), and the generic energy-drink `can` prop.
 Note: "ke luar angkasa" in the read is a simplification (39 km = stratosphere; space starts ~100 km).
-Rebuild: `bin/new_project.sh`, copy `video/*` into `src/video/`, `ffmpeg -i voice_final.mp3 -ar 48000 -ac 1
+Rebuild: `bin/new_project.sh`, copy `video/*` into `src/video/` and `brand/*` into `public/brand/` (the brand product shot supplied by the Skala+ team), `ffmpeg -i voice_final.mp3 -ar 48000 -ac 1
 voice/voice_final.wav`, then `make_audio.py` and `render.sh`.

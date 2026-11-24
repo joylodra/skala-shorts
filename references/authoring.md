@@ -99,8 +99,16 @@ plays the story on the old timeline through the map and the sound engine maps ev
 this way after the read was sped up (examples/kfc/video/timemap.ts, timemap.json). Captions must be rebuilt from the new
 voice (prepare_voice.py on the new file, then put the old-timeline map back).
 
+### Wall display copy
+Prefer drawn icons + numbers over word labels (a stopwatch, not "TIME"; an eye + a crowd of mini-Skala hoods, not
+"VIEWERS"; a trophy, not "RECORD!"). Universal badges such as the red "● LIVE" pill are fine. Keep a title card only
+where it sets the scene (name + date + place).
+
 ## 9. Checklist before the final render
 - Every shot's mid-frame still checked; hook frame and every punchline frame checked.
 - Nobody cut off unless on purpose; no camera inside furniture; no hood covering a face.
 - Captions don't sit on a face or on printed text (CAPTION_SKIP for text the picture already shows).
 - Events and SFX land on their words (check a few in words.txt).
+- No pop-ins: nothing appears in the last frames of a shot (check the 6 frames before every cut). Anything that should
+  be there for a shot is there from its first frame, or animates in on a word.
+- Each shot has one subject: don't put a character in front of the thing the voice is describing.
