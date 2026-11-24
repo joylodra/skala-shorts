@@ -97,8 +97,11 @@ const miniSkala = (g: CanvasRenderingContext2D, x: number, y: number, s: number,
 // ---------------- wordless HUD: every label is a drawn icon (numbers stay) ----------------
 type IconFn = (g: CanvasRenderingContext2D, x: number, y: number) => void;
 const ink = (g: CanvasRenderingContext2D, w = 8) => { g.lineWidth = w; g.strokeStyle = INK; g.lineJoin = "round"; g.lineCap = "round"; g.stroke(); };
-const hud = (g: CanvasRenderingContext2D, icon: IconFn, value: string, x: number, y: number, align: "left" | "right", hot = 0) => {
-  const w = 470, x0 = align === "left" ? x : x - w;
+const hud = (g: CanvasRenderingContext2D, icon: IconFn, value: string, x: number, y: number, align: "left" | "right" | "center", hot = 0, scale = 1) => {
+  if (scale !== 1) { g.save(); g.translate(x, y); g.scale(scale, scale); hud(g, icon, value, 0, 0, align, hot, 1); g.restore(); return; }
+  g.font = "900 78px sans-serif";
+  const w = Math.max(470, 145 + g.measureText(value).width + 40); // grows to fit its text
+  const x0 = align === "left" ? x : align === "right" ? x - w : x - w / 2; // center: grows evenly, stays in the safe zone
   g.fillStyle = "rgba(10,14,30,0.72)"; rr(g, x0, y, w, 150, 26); g.fill();
   icon(g, x0 + 75, y + 75);
   text(g, value, x0 + 145, y + 78, 78, hot > 0 ? mixHex("#ffffff", "#ffd23f", hot) : "#ffffff", 900, "left");
@@ -242,7 +245,7 @@ export const drawScreen = (g: CanvasRenderingContext2D, f: number) => {
   const kmh = 1357 * smooth((f - EV.kecepatan) / (EV.speed + 40 - EV.kecepatan));
   if (f < EV.dan) {
     hud(g, iconWatch((sec % 60) / 60), `${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(Math.floor(sec % 60)).padStart(2, "0")}`, CX - 235, 60, "left");
-    hud(g, iconSpeed(kmh / 1357), `${fmt(kmh)} km/jam`, CX - 235, H - 260, "left", f >= EV.suara - 2 ? clamp01(1 - (f - EV.suara) / 30) : f >= EV.speed + 38 ? clamp01(1 - (f - EV.speed - 38) / 20) : 0);
+    hud(g, iconSpeed(kmh / 1357), `${fmt(kmh)} km/jam`, CX, H - 330, "center", f >= EV.suara - 2 ? clamp01(1 - (f - EV.suara) / 30) : f >= EV.speed + 38 ? clamp01(1 - (f - EV.speed - 38) / 20) : 0, 0.78);
   } else {
     // viewers panel + floating hearts
     const v = 8_000_000 * smooth((f - EV.dan - 4) / (EV.juta + 14 - EV.dan));

@@ -111,4 +111,6 @@ where it sets the scene (name + date + place).
 - Events and SFX land on their words (check a few in words.txt).
 - No pop-ins: nothing appears in the last frames of a shot (check the 6 frames before every cut). Anything that should
   be there for a shot is there from its first frame, or animates in on a word.
+- Counters and labels fit their boxes at their LONGEST value (e.g. "1.357 km/jam", not "0 km/jam"), and still fit
+  during the shot's tightest camera punch: size boxes from `measureText`, centre them, scale down if needed.
 - Each shot has one subject: don't put a character in front of the thing the voice is describing.
